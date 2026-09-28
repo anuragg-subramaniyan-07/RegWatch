@@ -55,3 +55,25 @@ Tables needed for all the stages
 - The "weak vs strong" citation check — current check only confirms a citation exists in our database, not that it was part of what was actually retrieved for that call. More important once Phase 6 retrieval exists.
 - **Resolved this session, no longer open**: retry policy for permanently-dead gap-filled IDs (now `confirmed_dead_ids` + Fetch's failure table), and duplicate notification discovery (Watch's failure table).
 - Next up per the brief's Phase 1 checklist: repo scaffolding, CI, and Docker Compose — the design/data-model/ADR side of Phase 1 is now fully done.
+
+## Session 3 — 2026-09-27
+
+### What we built
+- Git initialized, connected to the GitHub remote, first commit pushed — the project is now actually under version control.
+- Python project scaffolded with `uv`, using a `src` layout, correctly named `regwatch`.
+- Core dependencies installed incrementally (only what Phase 2 needs so far): `pydantic`, `httpx` as regular dependencies, `pytest` and `ruff` as dev-only.
+- `docker-compose.yml` for a local PostgreSQL 16 + `pgvector` container, credentials read from a gitignored `.env` (with a committed `.env.example` template).
+- A working GitHub Actions CI workflow (`.github/workflows/ci.yml`): checks out code, installs `uv` and Python, installs dependencies, runs `ruff`, runs `pytest` — fully green as of this session.
+- A real first test (`tests/test_smoke.py`) confirming the `regwatch` package imports successfully.
+- **This completes the entire Phase 1 checklist**: design doc, data model, ADRs, repo scaffolding, CI, Docker Compose.
+
+### What we decided, and why
+- **Dependencies are added incrementally, phase by phase, not all up front.** FastAPI, SQLAlchemy/Alembic, and an LLM SDK are deliberately not installed yet, even though they're in the brief's final stack — they belong to phases that haven't started (3, 7, 8). Matches "don't add things before they're needed."
+- **Confirmed Python over Java/Spring Boot** when asked directly, despite Java's prevalence at financial institutions — the stated career target is AI-integration roles, where the ecosystem is Python-first, and the project's actual scale (~500 docs/year) doesn't need Java's strengths. Being "current" is a tiebreaker between comparable options, not a reason to abandon the better-fitting choice.
+- **`uv` chosen over plain pip+venv or Poetry** for dependency management — modern, fast, and gives real reproducibility via a lock file, with low risk since the underlying workflow is pip-compatible.
+- **A real minimal test was written to fix pytest's exit-code-5 problem, instead of special-casing the exit code in CI.** Consistent with the project's running theme of not band-aiding around a problem (same spirit as ADR-0001 rejecting higher polling frequency as an incomplete fix).
+- **Real engineering lesson from debugging CI**: a linter's own auto-fix suggestion isn't always correct to apply. Ruff's suggested fix for the "unused import" warning on the smoke test would have rewritten it to `pass`, silently gutting the only thing the test actually checked. Fixed correctly by adding a real assertion instead of blindly accepting the suggested fix.
+
+### Still open
+- No change to the items already open as of Session 2 (clause numbering scheme, job/run-tracking, the on-demand fetch for Diff, the Diff/Assess inconsistency, the weak/strong citation check) — none were touched this session.
+- Next up: **Phase 2 — the Watch stage.** RSS adapter behind a source-agnostic interface, with fixtures and tests, per the brief's phase plan.
